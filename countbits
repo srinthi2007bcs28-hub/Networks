@@ -1,0 +1,52 @@
+%{
+#include<stdio.h>
+#include<stdlib.h>
+int count=0;
+int pass=1;
+extern FILE *yyin;
+%}
+
+%%
+
+" is " {
+   if(pass==1){
+   printf("%s",yytext);
+   }
+   else{
+   count++;
+   printf(" was ");
+   }
+}
+
+[0-9]+ {
+        if(pass==1){
+        printf("%s",yytext);
+        }
+        else{
+        printf("%d", atoi(yytext) + 10);
+        }
+}
+
+.|\n {
+   printf("%s", yytext);
+}
+
+%%
+
+int yywrap(){
+   return 1;
+}
+
+int main(){
+   FILE *fp;
+   fp=fopen("input.txt","r");
+   if(fp==NULL){
+      printf("Cannot open the file:\n");
+      return 1;
+   }
+   yyin=fp;
+   yylex();
+   fclose(fp);
+   printf("\n Number of occurences of is=%d\n",count);
+   return 0;
+}
