@@ -1,0 +1,81 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Comparison function needed for qsort
+int compare(const void* a, const void* b) {
+    return (*(int*)a - *(int*)b);
+}
+
+int main() {
+    int n;
+    // Read the size of the array
+    if (scanf("%d", &n) != 1) return 0;
+    
+    int* arr = (int*)malloc(n * sizeof(int));
+    // Read the array elements from standard input
+    for (int i = 0; i < n; i++) {
+        if (scanf("%d", &arr[i]) != 1) return 0;
+    }
+    
+    // Memory to accumulate all unique OR results across all steps
+    int* res = (int*)malloc(n * 32 * sizeof(int));
+    int resSize = 0;
+    
+    // Tracks unique OR values generated from subarrays ending at the previous index
+    int* current = (int*)malloc(33 * sizeof(int));
+    int currentSize = 0;
+    
+    // Temporary helper array for processing calculations at each index
+    int next[33];
+    
+    for (int i = 0; i < n; i++) {
+        int x = arr[i];
+        int nextSize = 0;
+        
+        // Scenario 1: The element forms a new subarray of size 1
+        next[nextSize++] = x;
+        
+        // Scenario 2: Combine the current element with preceding subarray OR results
+        for (int j = 0; j < currentSize; j++) {
+            int newOr = current[j] | x;
+            if (nextSize == 0 || next[nextSize - 1] != newOr) {
+                next[nextSize++] = newOr;
+            }
+        }
+        
+        // Remove duplicates by sorting and filtering adjacent identical values
+        qsort(next, nextSize, sizeof(int), compare);
+        int uniqueIdx = 0;
+        for (int j = 0; j < nextSize; j++) {
+            if (j == 0 || next[j] != next[j - 1]) {
+                current[uniqueIdx++] = next[j];
+                res[resSize++] = next[j]; // Store into the primary results database
+            }
+        }
+        currentSize = uniqueIdx;
+    }
+    
+    // Sort the final collection of all cumulative results
+    qsort(res, resSize, sizeof(int), compare);
+    
+    // Count distinct global items
+    int distinctCount = 0;
+    if (resSize > 0) {
+        distinctCount = 1;
+        for (int i = 1; i < resSize; i++) {
+            if (res[i] != res[i - 1]) {
+                distinctCount++;
+            }
+        }
+    }
+    
+    // Print the final result to standard output
+    printf("%d\n", distinctCount);
+    
+    // Dynamic clean up to completely prevent memory leaks
+    free(arr);
+    free(res);
+    free(current);
+    
+    return 0;
+}
