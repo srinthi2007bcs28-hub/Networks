@@ -1,0 +1,66 @@
+#include <stdlib.h>
+
+// Comparison function for qsort
+int compare(const void* a, const void* b) {
+    return (*(int*)a - *(int*)b);
+}
+
+int subarrayBitwiseORs(int* arr, int arrSize) {
+    // Result array to accumulate all unique OR values across all iterations
+    int* res = (int*)malloc(arrSize * 32 * sizeof(int));
+    int resSize = 0;
+    
+    // Tracks unique OR values generated from the subarrays ending at the previous element
+    int* current = (int*)malloc(33 * sizeof(int));
+    int currentSize = 0;
+    
+    for (int i = 0; i < arrSize; i++) {
+        int x = arr[i];
+        
+        // Temp array to store new OR combinations generated at index i
+        int next[33];
+        int nextSize = 0;
+        
+        // Option 1: The current element starting its own subarray
+        next[nextSize++] = x;
+        
+        // Option 2: Combine current element with all previous subarray OR values
+        for (int j = 0; j < currentSize; j++) {
+            int newOr = current[j] | x;
+            // Deduplicate immediately if it's the same as the last inserted item
+            if (nextSize == 0 || next[nextSize - 1] != newOr) {
+                next[nextSize++] = newOr;
+            }
+        }
+        
+        // Deduplicate the 'next' array by sorting and filtering adjacent twins
+        qsort(next, nextSize, sizeof(int), compare);
+        int uniqueIdx = 0;
+        for (int j = 0; j < nextSize; j++) {
+            if (j == 0 || next[j] != next[j - 1]) {
+                current[uniqueIdx++] = next[j];
+                res[resSize++] = next[j]; // Dump into the master collection
+            }
+        }
+        currentSize = uniqueIdx;
+    }
+    
+    // Sort the final collection of all results to count total unique values
+    qsort(res, resSize, sizeof(int), compare);
+    
+    int distinctCount = 0;
+    if (resSize > 0) {
+        distinctCount = 1;
+        for (int i = 1; i < resSize; i++) {
+            if (res[i] != res[i - 1]) {
+                distinctCount++;
+            }
+        }
+    }
+    
+    // Free dynamically allocated heap memory to avoid leaks
+    free(res);
+    free(current);
+    
+    return distinctCount;
+}
